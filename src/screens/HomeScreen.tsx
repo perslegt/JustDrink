@@ -1,11 +1,15 @@
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useState } from "react";
 import { Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { RootStackParamList } from "../navigation/RootNavigator";
 import COLORS from "../theme/colors";
 
 type Language = 'en' | 'nl';
 
-export default function HomeScreen() {
+type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
+
+export default function HomeScreen({ navigation }: Props) {
     const [language, setLanguage] = useState<Language>('nl');
     const [langOpen, setLangOpen] = useState(false);
 
@@ -82,7 +86,7 @@ export default function HomeScreen() {
           <Text style={styles.playText}>{text.play}</Text>
         </Pressable>
 
-        <Pressable style={styles.linkButton} onPress={() => {}}>
+        <Pressable style={styles.linkButton} onPress={() => navigation.navigate("PlayerSelect")}>
           <Text style={styles.linkText}>{text.selectPlayers}</Text>
         </Pressable>
       </View>
