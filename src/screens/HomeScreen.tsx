@@ -3,25 +3,16 @@ import React, { useState } from "react";
 import { Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RootStackParamList } from "../navigation/RootNavigator";
+import { useLanguage, useT } from "../state/LanguageContext";
 import COLORS from "../theme/colors";
-
-type Language = 'en' | 'nl';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export default function HomeScreen({ navigation }: Props) {
-    const [language, setLanguage] = useState<Language>('nl');
     const [langOpen, setLangOpen] = useState(false);
 
-    const languages: { label: string; value: Language }[] = [
-      { label: "NL", value: "nl" },
-      { label: "EN", value: "en" },
-    ];
-
-    const text = {
-        play: language === 'nl' ? 'Spelen' : 'Play',
-        selectPlayers: language === "nl" ? "Spelers selecteren" : "Select players",
-    };
+    const { language, setLanguage } = useLanguage();
+    const { t } = useT();
 
     return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -35,12 +26,9 @@ export default function HomeScreen({ navigation }: Props) {
               pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
             ]}
           >
-            <Text style={styles.languageText}>
-              {language.toUpperCase()}
-            </Text>
+            <Text style={styles.languageText}>{language.toUpperCase()}</Text>
             <Text style={styles.chevron}>▾</Text>
           </Pressable>
-
           <Modal
             visible={langOpen}
             transparent
@@ -49,27 +37,37 @@ export default function HomeScreen({ navigation }: Props) {
           >
             <Pressable style={styles.modalBackdrop} onPress={() => setLangOpen(false)}>
               <View style={styles.dropdown}>
-                {languages.map((l) => (
-                  <Pressable
-                    key={l.value}
-                    onPress={() => {
-                      setLanguage(l.value);
-                      setLangOpen(false);
-                    }}
-                    style={({ pressed }) => [
-                      styles.dropdownItem,
-                      pressed && { opacity: 0.8 },
-                      language === l.value && styles.dropdownItemActive,
-                    ]}
-                  >
-                    <Text style={styles.dropdownItemText}>{l.label}</Text>
-                  </Pressable>
-                ))}
+                <Pressable
+                  onPress={() => {
+                    setLanguage("nl");
+                    setLangOpen(false);
+                  }}
+                  style={({ pressed }) => [
+                    styles.dropdownItem,
+                    pressed && { opacity: 0.8 },
+                    language === "nl" && styles.dropdownItemActive,
+                  ]}
+                >
+                  <Text style={styles.dropdownItemText}>NL</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    setLanguage("en");
+                    setLangOpen(false);
+                  }}
+                  style={({ pressed }) => [
+                    styles.dropdownItem,
+                    pressed && { opacity: 0.8 },
+                    language === "en" && styles.dropdownItemActive,
+                  ]}
+                >
+                  <Text style={styles.dropdownItemText}>EN</Text>
+                </Pressable>
               </View>
             </Pressable>
           </Modal>
         </View>
-
       </View>
 
       {/* Center content */}
@@ -82,12 +80,12 @@ export default function HomeScreen({ navigation }: Props) {
           />
         </View>
 
-        <Pressable style={styles.playButton} onPress={() => {}}>
-          <Text style={styles.playText}>{text.play}</Text>
+        <Pressable style={styles.playButton} onPress={() => navigation.navigate("GamesOverview")}>
+          <Text style={styles.playText}>{t("home.play")}</Text>
         </Pressable>
 
         <Pressable style={styles.linkButton} onPress={() => navigation.navigate("PlayerSelect")}>
-          <Text style={styles.linkText}>{text.selectPlayers}</Text>
+          <Text style={styles.linkText}>{t("home.selectPlayers")}</Text>
         </Pressable>
       </View>
     </SafeAreaView>

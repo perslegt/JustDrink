@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import { FlatList, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RootStackParamList } from "../navigation/RootNavigator";
+import { useT } from "../state/LanguageContext";
 import { usePlayers } from "../state/PlayersContext";
 import COLORS from "../theme/colors";
 
@@ -13,6 +14,8 @@ export default function PlayerSelectScreen() {
   const [name, setName] = useState("");
 
   const data = useMemo(() => players, [players]);
+
+  const { t } = useT();
 
   const onAdd = () => {
     addPlayer(name);
@@ -35,7 +38,7 @@ export default function PlayerSelectScreen() {
               pressed && { opacity: 0.85, transform: [{ scale: 0.96 }] },
             ]}
           >
-            <Text style={styles.backText}>Terug</Text>
+            <Text style={styles.backText}>{t("common.back")}</Text>
           </Pressable>
         </View>
 
@@ -49,7 +52,7 @@ export default function PlayerSelectScreen() {
           renderItem={({ item }) => (
             <View style={styles.row}>
               <Pressable
-                onLongPress={() => removePlayer(item.id)}   // “double tap” komt zo
+                onLongPress={() => removePlayer(item.id)}//TODO: Double tap to remove
                 style={styles.nameWrap}
               >
                 <Text style={styles.nameText}>{item.name}</Text>
@@ -67,7 +70,7 @@ export default function PlayerSelectScreen() {
           <TextInput
             value={name}
             onChangeText={setName}
-            placeholder="Naam toevoegen"
+            placeholder={t("players.addPlaceholder")}
             placeholderTextColor="rgba(255,255,255,0.45)"
             style={styles.input}
             onSubmitEditing={onAdd}
