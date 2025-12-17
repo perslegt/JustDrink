@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React, { useMemo, useState } from "react";
-import { FlatList, Keyboard, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { FlatList, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { usePlayers } from "../state/PlayersContext";
@@ -25,7 +25,7 @@ export default function PlayerSelectScreen() {
 
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={0}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
         <View style={styles.topBar}>
           <Pressable
@@ -63,7 +63,7 @@ export default function PlayerSelectScreen() {
         />
 
         {/* Input bar onderaan */}
-        <View style={[styles.bottomBar, { paddingBottom: 10 }]}>
+        <View style={[styles.bottomBar]}>
           <TextInput
             value={name}
             onChangeText={setName}
@@ -81,7 +81,7 @@ export default function PlayerSelectScreen() {
           </Pressable>
         </View>
       </Pressable>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -92,11 +92,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0,
     left: 0,
-    paddingTop: 46,
     paddingLeft: 12,
     paddingBottom: 10,
     zIndex: 50,
-    elevation: 50,
     width: "100%",
     backgroundColor: COLORS.background,
   },
@@ -109,13 +107,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 2,
     borderColor: COLORS.orangeSoft,
-    backgroundColor: "rgba(13,17,23,0.9)",
-
-    shadowColor: COLORS.orangeSoft,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 4,
+    backgroundColor: COLORS.orangeSoft,
   },
 
   backText: {
@@ -124,9 +116,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
 
-
   listContent: {
-    paddingTop: 110, // ruimte voor je topbar, later netter
+    paddingTop: 60, // ruimte voor je topbar, later netter
     paddingHorizontal: 16,
     paddingBottom: 10, // ruimte voor bottom bar
   },
@@ -139,7 +130,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 2,
     borderColor: COLORS.orangeSoft,
-    backgroundColor: "rgba(13,17,23,0.9)",
+    backgroundColor: COLORS.background,
     marginBottom: 10,
   },
 
@@ -158,8 +149,6 @@ const styles = StyleSheet.create({
   bottomBar: {
     marginHorizontal: 12,
     marginBottom: 12,
-    bottom: 25,
-    paddingBottom: 50,
     flexDirection: "row",
     gap: 10,
     padding: 10,
