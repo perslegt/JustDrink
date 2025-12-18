@@ -4,6 +4,7 @@ import * as ScreenOrientation from "expo-screen-orientation";
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import RulesInfo from "../components/RulesInfo";
 import TopBar from "../components/TopBar";
 import { createSipItState, nextPrompt, type GeneratedPrompt, type SipItState } from "../games/sipit/engine";
 import type { RootStackParamList } from "../navigation/RootNavigator";
@@ -18,10 +19,9 @@ const BG_BY_CATEGORY: Record<string, string> = {
   vote: "rgba(52, 24, 4, 1)",
   quiz: "rgba(52, 24, 4, 1)",
   chain: "rgba(52, 24, 4, 1)",
-  rule_on: "rgba(52, 24, 4, 1)",
-  rule_off: "rgba(52, 24, 4, 1)",
-  buddies_on: "rgba(52, 24, 4, 1)",
-  buddies_off: "rgba(52, 24, 4, 1)",
+  rule: "rgba(14, 109, 7, 1)",
+  buddies_on: "rgba(15, 28, 165, 1)",
+  buddies_off: "rgba(15, 28, 165, 1)",
 };
 
 export default function SipItScreen() {
@@ -66,7 +66,7 @@ export default function SipItScreen() {
     <View style={[styles.container, { backgroundColor: bg }]}>
       {/* Topbar */}
       <View style={styles.topBarOverlay}>
-        <TopBar onBack={() => navigation.goBack()} />
+        <TopBar onBack={() => navigation.goBack()} right={<RulesInfo rules={prompt.activeRules} />} />
       </View>
 
       {/* Tap area */}
@@ -99,7 +99,6 @@ const styles = StyleSheet.create({
     zIndex: 50,
     elevation: 50,
   },
-
 
   tapArea: {
     flex: 1,

@@ -15,7 +15,7 @@ export default function TopBar({ onBack, right, title }: Props) {
   const { t } = useT();
 
   return (
-    <View style={[styles.safeWrap, { paddingTop: insets.top + 6 }]}>
+    <View style={[styles.safeWrap, { paddingTop: insets.top + 6, paddingRight: insets.right + 6 }]}>
       <View style={styles.row}>
         <View style={styles.left}>
           {onBack ? (
@@ -45,7 +45,6 @@ const styles = StyleSheet.create({
   safeWrap: {
     paddingHorizontal: 12,
     paddingBottom: 10,
-    backgroundColor: COLORS.background,
   },
 
   // fixed-height alignment row (this is the key)
@@ -54,7 +53,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: COLORS.background,
   },
 
   left: {

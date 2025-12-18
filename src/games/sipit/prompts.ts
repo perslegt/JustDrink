@@ -7,21 +7,19 @@ export type Category =
   | "vote"
   | "quiz"
   | "chain"
-  | "rule_on"
-  | "rule_off"
+  | "rule"
   | "buddies_on"
   | "buddies_off";
 
 export const CATEGORY_WEIGHT: Record<Category, number> = {
-  normal: 8,
-  duo: 4,
+  normal: 10,
+  duo: 8,
   challenge: 2,
   vote: 2,
   chain: 1,
-  rule_on: 1,
-  rule_off: 0,      // wordt via effect getoond
-  buddies_on: 0,    // via effect
-  buddies_off: 0,   // via effect
+  rule: 0, // via effect
+  buddies_on: 0, // via effect
+  buddies_off: 0, // via effect
   quiz: 0,
 };
 
@@ -277,33 +275,27 @@ export const PROMPTS: PromptTemplate[] = [
   // + losse “regel” prompts (wie faalt drinkt)
   // =========================
   {
-    category: "rule_on",
-    effect: "no_names_on",
+    category: "rule",
     text: { nl: "REGEL: Geen namen meer zeggen!", en: "RULE: No names allowed!" },
   },
   {
-    category: "rule_off",
-    effect: "no_names_off",
-    text: { nl: "REGEL OPGEHEVEN: Namen mogen weer.", en: "RULE LIFTED: Names are allowed again." },
-  },
-  {
-    category: "rule_on",
+    category: "rule",
     text: { nl: "REGEL: Niet wijzen. Wie wijst: 1 slok.", en: "RULE: No pointing. If you point: 1 sip." },
   },
   {
-    category: "rule_on",
+    category: "rule",
     text: { nl: "REGEL: Drink met links. Vergeet je dat: 1 slok.", en: "RULE: Drink with your left hand. Forget? 1 sip." },
   },
   {
-    category: "rule_on",
+    category: "rule",
     text: { nl: "REGEL: Niet lachen. Lach je: 2 slokken.", en: "RULE: No laughing. If you laugh: 2 sips." },
   },
   {
-    category: "rule_on",
+    category: "rule",
     text: { nl: "REGEL: Geen scheldwoorden. Overtreding: 2 slokken.", en: "RULE: No swearing. Break it: 2 sips." },
   },
   {
-    category: "rule_on",
+    category: "rule",
     text: { nl: "REGEL: Geen telefoons. Pak je ‘m? 2 slokken.", en: "RULE: No phones. Touch it? 2 sips." },
   },
 

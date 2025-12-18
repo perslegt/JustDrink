@@ -2,35 +2,31 @@ import type { Language } from "../../i18n/translations";
 import { PROMPTS, renderPrompt, type Category, type PromptTemplate } from "./prompts";
 
 export type ActiveTimedEffect = {
-  type: "no_names" | "buddies";
+  type: "buddies";
+  remainingTurns: number;
+};
+
+export type ActiveRule = {
+  key: string;
+  label: string;
   remainingTurns: number;
 };
 
 export type SipItState = {
   players: string[];
   effects: ActiveTimedEffect[];
-  buddiesPair: [string, string] | null; // ✅ onthouden
+  buddiesPair: [string, string] | null;
+  activeRules: ActiveRule[];
 };
 
 export type GeneratedPrompt = {
   text: string;
   category: Category;
+  activeRules: ActiveRule[];
 };
 
 function randInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function weightedPick<T>(items: T[], getWeight: (item: T) => number): T {
-  const total = items.reduce((sum, it) => sum + Math.max(0, getWeight(it)), 0);
-  if (total <= 0) return items[0];
-
-  let r = Math.random() * total;
-  for (const it of items) {
-    r -= Math.max(0, getWeight(it));
-    if (r <= 0) return it;
-  }
-  return items[items.length - 1];
 }
 
 function pickDistinct(players: string[], n: number): string[] {
@@ -54,18 +50,21 @@ function tickEffects(state: SipItState) {
     .filter((e) => e.remainingTurns > 0);
 }
 
+function stripRulePrefix(label: string) {
+  return label.replace(/^REGEL:\s*/i, "").replace(/^RULE:\s*/i, "");
+}
+
+function tickRules(state: SipItState): ActiveRule | null {
+  state.activeRules = state.activeRules.map((r) => ({ ...r, remainingTurns: r.remainingTurns - 1 }));
+  const expired = state.activeRules.find((r) => r.remainingTurns <= 0) ?? null;
+  if (expired) state.activeRules = state.activeRules.filter((r) => r.key !== expired.key);
+  return expired;
+}
+
 function findEffectTpl(effect: NonNullable<PromptTemplate["effect"]>) {
   const tpl = PROMPTS.find((p) => p.effect === effect);
   if (!tpl) throw new Error(`Missing prompt template for effect: ${effect}`);
   return tpl;
-}
-
-function startNoNames(state: SipItState) {
-  state.effects.push({ type: "no_names", remainingTurns: randInt(3, 8) });
-}
-
-function clearNoNames(state: SipItState) {
-  state.effects = state.effects.filter((e) => e.type !== "no_names");
 }
 
 function startBuddies(state: SipItState): [string, string] | null {
@@ -79,15 +78,21 @@ function startBuddies(state: SipItState): [string, string] | null {
   return state.buddiesPair;
 }
 
-function clearBuddiesEffect(state: SipItState) {
-  state.effects = state.effects.filter((e) => e.type !== "buddies");
-}
-
 function endBuddies(state: SipItState): [string, string] | null {
   const pair = state.buddiesPair;
   state.buddiesPair = null;
-  clearBuddiesEffect(state);
+  state.effects = state.effects.filter((e) => e.type !== "buddies");
   return pair;
+}
+
+function addRule(state: SipItState, rule: { key: string; label: string; minTurns?: number; maxTurns?: number }) {
+  if (state.activeRules.some((r) => r.key === rule.key)) return;
+
+  state.activeRules.push({
+    key: rule.key,
+    label: rule.label,
+    remainingTurns: randInt(rule.minTurns ?? 4, rule.maxTurns ?? 10),
+  });
 }
 
 export function createSipItState(players: string[]): SipItState {
@@ -95,28 +100,27 @@ export function createSipItState(players: string[]): SipItState {
     players: [...players],
     effects: [],
     buddiesPair: null,
+    activeRules: [],
   };
 }
 
-/**
- * Genereer de volgende prompt:
- * - Timers tikken
- * - Als buddies/no_names aflopen -> meteen OFF prompt (met namen waar nodig)
- * - Soms starten we rules/buddies
- * - Anders kiezen we een normale prompt
- */
 export function nextPrompt(state: SipItState, language: Language): GeneratedPrompt {
-  // 1) onthoud status vóór tick
-  const noNamesWasActive = hasEffect(state, "no_names");
+  // 1) tick rules: als er één afloopt, toon meteen een "rule_off"
+  const expiredRule = tickRules(state);
+  if (expiredRule) {
+    const lifted =
+      language === "nl"
+        ? `REGEL OPGEHEVEN: ${stripRulePrefix(expiredRule.label)}`
+        : `RULE LIFTED: ${stripRulePrefix(expiredRule.label)}`;
+
+    return { text: lifted, category: "rule", activeRules: [...state.activeRules] };
+  }
+
+  // 2) tick effects (buddies)
   const buddiesWasActive = hasEffect(state, "buddies");
-
-  // 2) tick timers
   tickEffects(state);
-
-  const noNamesIsActive = hasEffect(state, "no_names");
   const buddiesIsActive = hasEffect(state, "buddies");
 
-  // 3) Buddies net afgelopen -> buddies_off met herinnerde namen
   if (buddiesWasActive && !buddiesIsActive) {
     const endedPair = endBuddies(state);
     const tpl = findEffectTpl("buddies_off");
@@ -125,55 +129,55 @@ export function nextPrompt(state: SipItState, language: Language): GeneratedProm
       buddiesPair: state.buddiesPair,
       endedBuddiesPair: endedPair ?? null,
     });
-    return { text, category: tpl.category };
+    return { text, category: tpl.category, activeRules: [...state.activeRules] };
   }
 
-  // 4) No-names net afgelopen -> rule_off
-  if (noNamesWasActive && !noNamesIsActive) {
-    clearNoNames(state);
-    const tpl = findEffectTpl("no_names_off");
-    const text = renderPrompt(tpl, language, {
-      pick: () => [],
-      buddiesPair: state.buddiesPair,
-    });
-    return { text, category: tpl.category };
+  // 3) kans om een nieuwe rule te starten (meerdere tegelijk mogelijk)
+  //    candidates: no_names (effect) + andere rule_on zonder effect
+  if (state.activeRules.length < 3 && Math.random() < 0.12) {
+    const ruleCandidates = PROMPTS.filter((p) => p.category === "rule");
+
+    if (ruleCandidates.length > 0) {
+      // maak candidates uniek op label (zodat geen duplicates)
+      const available = ruleCandidates.filter((tpl) => {
+        const label = renderPrompt(tpl, language, { pick: () => [], buddiesPair: state.buddiesPair });
+        const key = `rule_${label}`;
+        return !state.activeRules.some((r) => r.key === key);
+      });
+
+      if (available.length > 0) {
+        const picked = available[randInt(0, available.length - 1)];
+        const label = renderPrompt(picked, language, { pick: () => [], buddiesPair: state.buddiesPair });
+        const key = `rule_${label}`;
+
+        addRule(state, { key, label });
+
+        // Toon de regel zelf (jouw tekst begint al met REGEL:)
+        return { text: label, category: "rule", activeRules: [...state.activeRules] };
+      }
+    }
   }
 
-  // 5) kans om effecten te starten
-  const roll = Math.random();
 
-  if (!noNamesIsActive && roll < 0.08) {
-    startNoNames(state);
-    const tpl = findEffectTpl("no_names_on");
-    const text = renderPrompt(tpl, language, {
-      pick: () => [],
-      buddiesPair: state.buddiesPair,
-    });
-    return { text, category: tpl.category };
-  }
-
-  if (!buddiesIsActive && roll > 0.92) {
+  // 4) buddies starten (los van rules)
+  if (!buddiesIsActive && Math.random() > 0.92) {
     const pair = startBuddies(state);
     const tpl = findEffectTpl("buddies_on");
     const text = renderPrompt(tpl, language, {
-      // buddies_on prompt gebruikt 2 namen: we geven die via pick terug
       pick: () => (pair ? [pair[0], pair[1]] : []),
       buddiesPair: pair ?? null,
     });
-    return { text, category: tpl.category };
+    return { text, category: tpl.category, activeRules: [...state.activeRules] };
   }
 
-  // 6) normale prompts (effect-templates uitsluiten)
-  const normalPool = PROMPTS.filter(
-    (p) => !p.effect && p.category !== "quiz"
-  );
-  const tpl = weightedPick(normalPool, (p) => p.weight ?? 1);
+  // 5) normale prompt pool (quiz uit)
+  const normalPool = PROMPTS.filter((p) => !p.effect && p.category !== "quiz");
+  const tpl = normalPool[randInt(0, normalPool.length - 1)];
 
-  const ctx = {
+  const text = renderPrompt(tpl, language, {
     pick: (n: number) => pickDistinct(state.players, n),
     buddiesPair: state.buddiesPair,
-  };
+  });
 
-  const text = renderPrompt(tpl, language, ctx);
-  return { text, category: tpl.category };
+  return { text, category: tpl.category, activeRules: [...state.activeRules] };
 }
