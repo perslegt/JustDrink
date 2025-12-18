@@ -21,6 +21,18 @@ function randInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function weightedPick<T>(items: T[], getWeight: (item: T) => number): T {
+  const total = items.reduce((sum, it) => sum + Math.max(0, getWeight(it)), 0);
+  if (total <= 0) return items[0];
+
+  let r = Math.random() * total;
+  for (const it of items) {
+    r -= Math.max(0, getWeight(it));
+    if (r <= 0) return it;
+  }
+  return items[items.length - 1];
+}
+
 function pickDistinct(players: string[], n: number): string[] {
   const pool = [...players];
   const picked: string[] = [];
@@ -152,8 +164,10 @@ export function nextPrompt(state: SipItState, language: Language): GeneratedProm
   }
 
   // 6) normale prompts (effect-templates uitsluiten)
-  const normalPool = PROMPTS.filter((p) => !p.effect);
-  const tpl = normalPool[randInt(0, normalPool.length - 1)];
+  const normalPool = PROMPTS.filter(
+    (p) => !p.effect && p.category !== "quiz"
+  );
+  const tpl = weightedPick(normalPool, (p) => p.weight ?? 1);
 
   const ctx = {
     pick: (n: number) => pickDistinct(state.players, n),

@@ -2,8 +2,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
+import GameCard from "../components/GameCard";
+import Screen from "../components/Screen";
+import TopBar from "../components/TopBar";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { useT } from "../state/LanguageContext";
 import COLORS from "../theme/colors";
@@ -13,107 +16,70 @@ export default function GamesOverviewScreen() {
   const { t } = useT();
 
   return (
-    <View style={styles.container}>
-      {/* Topbar */}
-      <View style={styles.topBar}>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.85 }]}
-        >
-          <Text style={styles.backText}>← {t("common.back")}</Text>
-        </Pressable>
-      </View>
+    <Screen>
+      <TopBar onBack={() => navigation.goBack()} />
 
-      {/* Games */}
       <View style={styles.content}>
-        <Pressable
-          onPress={() => navigation.navigate("SipIt")}
-          style={({ pressed }) => [styles.gameCard, pressed && { opacity: 0.8 }]}
-        >
-          <Text style={styles.gameTitle}>SipIt</Text>
+        {/* SipIt */}
+        <GameCard onPress={() => navigation.navigate("SipIt")}>
+          <View style={styles.cardContent}>
+            <Text style={styles.title}>SipIt</Text>
 
-          <View style={styles.playersBadge}>
-            <Ionicons name="people" size={18} color={COLORS.textPrimary} />
-            <Text style={styles.playersText}>2+</Text>
+            <View style={styles.players}>
+              <Ionicons name="people" size={18} color={COLORS.textPrimary} />
+              <Text style={styles.playersText}>2+</Text>
+            </View>
           </View>
-        </Pressable>
+        </GameCard>
 
-        <View style={[styles.gameCard, styles.gameCardDisabled]}>
-          <Text style={styles.disabledText}>{t("games.moreComingSoon")}</Text>
-        </View>
+        {/* Coming soon */}
+        <GameCard disabled>
+          <View style={styles.cardContent}>
+            <Text style={styles.comingSoonText}>{t("games.moreComingSoon")}</Text>
+          </View>
+        </GameCard>
       </View>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-
-  topBar: {
-    paddingTop: 46,
-    paddingHorizontal: 12,
-    paddingBottom: 10,
-    backgroundColor: COLORS.background,
-  },
-  backButton: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    height: 44,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: COLORS.orangeSoft,
-    backgroundColor: COLORS.orangeSoft,
-  },
-  backText: { color: COLORS.textPrimary, fontWeight: "700", fontSize: 16 },
-
   content: {
     paddingHorizontal: 16,
     paddingTop: 10,
     gap: 12,
   },
 
-  gameCard: {
-    height: 120,
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: COLORS.orangeSoft,
-    backgroundColor: COLORS.orangeSoft,
-    padding: 16,
+  cardContent: {
+    flex: 1,
     justifyContent: "space-between",
   },
 
-  gameTitle: {
+  title: {
     color: COLORS.textPrimary,
-    fontWeight: "800",
+    fontWeight: "900",
     fontSize: 34,
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
 
-  playersBadge: {
-    position: "absolute",
-    right: 12,
-    bottom: 12,
+  players: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingHorizontal: 10,
-    height: 34,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: COLORS.orangeSoft,
-    backgroundColor: COLORS.orangeSoft,
+    alignSelf: "flex-end",
+    opacity: 0.9,
   },
-  playersText: { color: COLORS.textPrimary, fontWeight: "700", fontSize: 14 },
 
-  gameCardDisabled: {
-    opacity: 0.45,
-    borderStyle: "dashed",
-  },
-  disabledText: {
+  playersText: {
     color: COLORS.textPrimary,
     fontWeight: "700",
     fontSize: 16,
+  },
+
+  comingSoonText: {
+    color: COLORS.textPrimary,
+    fontWeight: "800",
+    fontSize: 18,
+    opacity: 0.6,
   },
 });

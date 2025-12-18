@@ -3,6 +3,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React, { useMemo, useState } from "react";
 import { FlatList, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import TopBar from "../components/TopBar";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useT } from "../state/LanguageContext";
 import { usePlayers } from "../state/PlayersContext";
@@ -30,23 +31,14 @@ export default function PlayerSelectScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
-        <View style={styles.topBar}>
-          <Pressable
-            onPress={() => navigation.goBack()}
-            style={({ pressed }) => [
-              styles.backButton,
-              pressed && { opacity: 0.85, transform: [{ scale: 0.96 }] },
-            ]}
-          >
-            <Text style={styles.backText}>{t("common.back")}</Text>
-          </Pressable>
-        </View>
+        <TopBar onBack={() => navigation.goBack()} />
 
         {/* Lijst */}
         <FlatList
           style={{ flex: 1, backgroundColor: COLORS.background }}
           contentContainerStyle={styles.listContent}
           data={data}
+          inverted
           keyExtractor={(item) => item.id}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => (
@@ -91,38 +83,14 @@ export default function PlayerSelectScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
 
-  topBar: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    paddingLeft: 12,
-    paddingBottom: 10,
-    zIndex: 50,
-    width: "100%",
+  listWrap: {
+    flex: 1,
     backgroundColor: COLORS.background,
   },
 
-  backButton: {
-    width: 70,
-    height: 44,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: COLORS.orangeSoft,
-    backgroundColor: COLORS.orangeSoft,
-  },
-
-  backText: {
-    color: COLORS.textPrimary,
-    fontWeight: "700",
-    fontSize: 18,
-  },
-
   listContent: {
-    paddingTop: 60, // ruimte voor je topbar, later netter
     paddingHorizontal: 16,
-    paddingBottom: 10, // ruimte voor bottom bar
+    paddingBottom: 10,
   },
 
   row: {

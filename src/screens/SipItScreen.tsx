@@ -3,8 +3,8 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as ScreenOrientation from "expo-screen-orientation";
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import TopBar from "../components/TopBar";
 import { createSipItState, nextPrompt, type GeneratedPrompt, type SipItState } from "../games/sipit/engine";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { useT } from "../state/LanguageContext";
@@ -13,20 +13,19 @@ import COLORS from "../theme/colors";
 
 const BG_BY_CATEGORY: Record<string, string> = {
   normal: COLORS.background,
-  duo: "rgba(255,159,28,0.10)",
-  challenge: "rgba(255,159,28,0.14)",
-  vote: "rgba(160,90,255,0.14)",
-  quiz: "rgba(0,140,255,0.14)",
-  chain: "rgba(255,220,0,0.12)",
-  rule_on: "rgba(255,60,60,0.14)",
-  rule_off: "rgba(0,200,120,0.14)",
-  buddies_on: "rgba(0,140,255,0.14)",
-  buddies_off: "rgba(0,200,120,0.14)",
+  duo: COLORS.background,
+  challenge: "rgba(63, 36, 17, 1)",
+  vote: "rgba(52, 24, 4, 1)",
+  quiz: "rgba(52, 24, 4, 1)",
+  chain: "rgba(52, 24, 4, 1)",
+  rule_on: "rgba(52, 24, 4, 1)",
+  rule_off: "rgba(52, 24, 4, 1)",
+  buddies_on: "rgba(52, 24, 4, 1)",
+  buddies_off: "rgba(52, 24, 4, 1)",
 };
 
 export default function SipItScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const insets = useSafeAreaInsets();
   const { t, language } = useT();
   const { players } = usePlayers();
 
@@ -66,13 +65,8 @@ export default function SipItScreen() {
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>
       {/* Topbar */}
-      <View style={[styles.topBar, { paddingTop: insets.top + 6 }]}>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.85 }]}
-        >
-          <Text style={styles.backText}>← {t("common.back")}</Text>
-        </Pressable>
+      <View style={styles.topBarOverlay}>
+        <TopBar onBack={() => navigation.goBack()} />
       </View>
 
       {/* Tap area */}
@@ -97,33 +91,15 @@ export default function SipItScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-
-  topBar: {
+  topBarOverlay: {
     position: "absolute",
     top: 0,
     left: 0,
+    right: 0,
     zIndex: 50,
     elevation: 50,
-    paddingLeft: 12,
   },
 
-  backButton: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    height: 44,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: COLORS.background,
-    backgroundColor: "rgba(255, 255, 255, 0.25)",
-  },
-
-  backText: {
-    color: COLORS.textPrimary,
-    fontWeight: "700",
-    fontSize: 16,
-  },
 
   tapArea: {
     flex: 1,
@@ -135,9 +111,9 @@ const styles = StyleSheet.create({
   promptText: {
     color: COLORS.textPrimary,
     fontWeight: "800",
-    fontSize: 34,
+    fontSize: 26,
     textAlign: "center",
-    lineHeight: 40,
+    lineHeight: 32,
   },
 
   hint: {

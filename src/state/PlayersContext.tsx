@@ -21,7 +21,7 @@ export function PlayersProvider({ children }: { children: React.ReactNode }) {
   const addPlayer = (name: String) => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    setPlayers((prev) => [...prev, { id: makeId(), name: trimmed }]);
+    setPlayers((prev) => [{ id: makeId(), name: trimmed }, ...prev]);
   }
 
   const removePlayer = (id: string) => {

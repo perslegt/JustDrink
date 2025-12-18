@@ -1,5 +1,5 @@
 const COLORS = {
-  background: "#361904ff",      // carbon base
+  background: "#361904ff",    // brown base
   orange: "#ff9f1c",          // bier / neon
   orangeSoft: "rgba(255,159,28,0.2)",
   brown: "#5a2e0e",           // logo outline
