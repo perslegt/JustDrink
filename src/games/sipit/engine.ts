@@ -74,7 +74,7 @@ function startBuddies(state: SipItState): [string, string] | null {
   if (pair.length < 2) return null;
 
   state.buddiesPair = [pair[0], pair[1]];
-  state.effects.push({ type: "buddies", remainingTurns: randInt(4, 10) });
+  state.effects.push({ type: "buddies", remainingTurns: randInt(20, 50) });
   return state.buddiesPair;
 }
 
@@ -134,7 +134,7 @@ export function nextPrompt(state: SipItState, language: Language): GeneratedProm
 
   // 3) kans om een nieuwe rule te starten (meerdere tegelijk mogelijk)
   //    candidates: no_names (effect) + andere rule_on zonder effect
-  if (state.activeRules.length < 3 && Math.random() < 0.12) {
+  if (state.activeRules.length < 3 && Math.random() < 0.03) {
     const ruleCandidates = PROMPTS.filter((p) => p.category === "rule");
 
     if (ruleCandidates.length > 0) {
@@ -160,7 +160,7 @@ export function nextPrompt(state: SipItState, language: Language): GeneratedProm
 
 
   // 4) buddies starten (los van rules)
-  if (!buddiesIsActive && Math.random() > 0.92) {
+  if (!buddiesIsActive && Math.random() < 0.03) {
     const pair = startBuddies(state);
     const tpl = findEffectTpl("buddies_on");
     const text = renderPrompt(tpl, language, {

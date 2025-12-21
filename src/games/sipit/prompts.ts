@@ -12,8 +12,8 @@ export type Category =
   | "buddies_off";
 
 export const CATEGORY_WEIGHT: Record<Category, number> = {
-  normal: 10,
-  duo: 8,
+  normal: 20,
+  duo: 16,
   challenge: 2,
   vote: 2,
   chain: 1,
@@ -85,38 +85,15 @@ export const PROMPTS: PromptTemplate[] = [
   {
     category: "normal",
     text: {
-      nl: "{a} vertelt iets gênants. Wil je niet? Neem 2 slokken.",
-      en: "{a} shares something embarrassing. Don’t want to? Take 2 sips.",
-    },
-    fill: ({ pick }) => ({ a: pick(1)[0] ?? "?" }),
-  },
-  {
-    category: "normal",
-    text: {
-      nl: "{a} mag iemand een bijnaam geven. Diegene drinkt 1 slok.",
-      en: "{a} gives someone a nickname. They drink 1 sip.",
-    },
-    fill: ({ pick }) => ({ a: pick(1)[0] ?? "?" }),
-  },
-  {
-    category: "normal",
-    text: {
-      nl: "Iedereen met een drankje in de hand: 1 slok.",
-      en: "Everyone holding a drink: 1 sip.",
-    },
-  },
-  {
-    category: "normal",
-    text: {
-      nl: "Iedereen die vandaag al ‘morgen begin ik’ heeft gedacht: 2 slokken.",
-      en: "Anyone who thought “I’ll start tomorrow” today: 2 sips.",
-    },
-  },
-  {
-    category: "normal",
-    text: {
       nl: "Degene met de laagste batterij: 2 slokken.",
       en: "Whoever has the lowest phone battery: 2 sips.",
+    },
+  },
+  {
+  category: "normal",
+    text: {
+      nl: "Iedereen die morgen ‘vroeg’ moet opstaan: 2 slokken.",
+      en: "Anyone who has to get up early tomorrow: 2 sips.",
     },
   },
   {
@@ -129,15 +106,78 @@ export const PROMPTS: PromptTemplate[] = [
   {
     category: "normal",
     text: {
-      nl: "Iedereen met witte schoenen: 1 slok.",
-      en: "Anyone wearing white shoes: 1 sip.",
+      nl: "Iedereen met witte sokken: 1 slok.",
+      en: "Anyone wearing white socks: 1 sip.",
     },
   },
   {
     category: "normal",
     text: {
-      nl: "Iedereen die ooit een boete kreeg: 2 slokken.",
-      en: "Anyone who ever got a fine: 2 sips.",
+      nl: "Iedereen die rookt: 2 slokken.",
+      en: "Anyone who smokes: 2 sips.",
+    },
+  },
+  {
+    category: "normal",
+    text: {
+      nl: "Iedereen met een huisdier: 1 slok.",
+      en: "Anyone who has a pet: 1 sip.",
+    },
+  },
+  {
+    category: "normal",
+    text: {
+      nl: "Alle mannen: 1 slok.",
+      en: "All men: 1 sip.",
+    },
+  },
+  {
+    category: "normal",
+    text: {
+      nl: "Alle vrouwen: 1 slok.",
+      en: "All women: 1 sip.",
+    },
+  },
+  {
+    category: "normal",
+    text: {
+      nl: "Alle studenten: 1 slok.",
+      en: "All students: 1 sip.",
+    },
+  },
+  {
+    category: "normal",
+    text: {
+      nl: "Als je vandaag hebt gewerkt: 2 slokken",
+      en: "If you worked today: 2 sips",
+    },
+  },
+  {
+    category: "normal",
+    text: {
+      nl: "Als je morgen vroeg op moet: 2 slokken.",
+      en: "If you have to get up early tomorrow: 2 sips.",
+    },
+  },
+  {
+    category: "normal",
+    text: {
+      nl: "Ben je langer dan 1.90m? Neem 1 slok.",
+      en: "Are you taller than 1.90m? Take 1 sip.",
+    },
+  },
+  {
+    category: "normal",
+    text: {
+      nl: "Degene die het verst van hier woont: 2 slokken.",
+      en: "Whoever lives farthest from here: 2 sips.",
+    },
+  },
+  {
+    category: "normal",
+    text: {
+      nl: "Degene met nikes aan: 1 slok.",
+      en: "Whoever has nikes on: 1 sip.",
     },
   },
   {
@@ -148,21 +188,16 @@ export const PROMPTS: PromptTemplate[] = [
     },
     fill: ({ pick }) => ({ a: pick(1)[0] ?? "?" }),
   },
-  {
-    category: "normal",
-    text: {
-      nl: "{a} neemt 1 slok voor elke keer dat je vandaag hebt gegeten (max 3).",
-      en: "{a} takes 1 sip for every time you ate today (max 3).",
-    },
-    fill: ({ pick }) => ({ a: pick(1)[0] ?? "?" }),
-  },
 
   // =========================
   // DUO (veel)
   // =========================
   {
     category: "duo",
-    text: { nl: "{a} en {b}: cheers! Neem samen 1 slok.", en: "{a} and {b}: cheers! Take 1 sip together." },
+    text: {
+      nl: "{a} en {b}: cheers! Neem samen 1 slok.",
+      en: "{a} and {b}: cheers! Take 1 sip together."
+    },
     fill: ({ pick }) => {
       const [a, b] = pick(2);
       return { a: a ?? "?", b: b ?? "?" };
@@ -170,7 +205,10 @@ export const PROMPTS: PromptTemplate[] = [
   },
   {
     category: "duo",
-    text: { nl: "{a} en {b}: steen-papier-schaar. Verliezer 2 slokken.", en: "{a} and {b}: rock-paper-scissors. Loser takes 2 sips." },
+    text: {
+      nl: "{a} en {b}: steen-papier-schaar. Verliezer 2 slokken.",
+      en: "{a} and {b}: rock-paper-scissors. Loser takes 2 sips."
+    },
     fill: ({ pick }) => {
       const [a, b] = pick(2);
       return { a: a ?? "?", b: b ?? "?" };
@@ -178,7 +216,10 @@ export const PROMPTS: PromptTemplate[] = [
   },
   {
     category: "duo",
-    text: { nl: "{a} noemt een categorie. {b} moet 3 dingen noemen. Fout = 2 slokken.", en: "{a} picks a category. {b} names 3 things. Fail = 2 sips." },
+    text: {
+      nl: "{a} noemt een categorie. {b} moet 3 dingen noemen. Fout = 2 slokken.",
+      en: "{a} picks a category. {b} names 3 things. Fail = 2 sips."
+    },
     fill: ({ pick }) => {
       const [a, b] = pick(2);
       return { a: a ?? "?", b: b ?? "?" };
@@ -186,7 +227,54 @@ export const PROMPTS: PromptTemplate[] = [
   },
   {
     category: "duo",
-    text: { nl: "{a} en {b} wisselen van drankje voor 1 slok.", en: "{a} and {b} swap drinks for 1 sip." },
+    text: {
+      nl: "Als {a} ouder is dan {b}, neemt {a} 2 slokken. Anders {b}.",
+      en: "If {a} is older than {b}, {a} takes 2 sips. Otherwise {b}."
+    },
+    fill: ({ pick }) => {
+      const [a, b] = pick(2);
+      return { a: a ?? "?", b: b ?? "?" };
+    },
+  },
+  {
+    category: "duo",
+    text: {
+      nl: "{a} en {b}: zeg tegelijk een getal van 1–10. Zelfde getal? Beide 2 slokken.",
+      en: "{a} and {b}: say a number from 1–10 at the same time. Same number? Both take 2 sips."
+    },
+    fill: ({ pick }) => {
+      const [a, b] = pick(2);
+      return { a: a ?? "?", b: b ?? "?" };
+    },
+  },
+  {
+    category: "duo",
+    text: {
+      nl: "{a} en {b}: hoedje van de koning. Verliezer neemt 2 slokken.",
+      en: "{a} and {b}: king's hat. Loser takes 2 sips."
+    },
+    fill: ({ pick }) => {
+      const [a, b] = pick(2);
+      return { a: a ?? "?", b: b ?? "?" };
+    },
+  },
+  {
+    category: "duo",
+    text: {
+      nl: "{a} en {b}: Kop of munt. Verliezer neemt 2 slokken.",
+      en: "{a} and {b}: heads or tails. Loser takes 2 sips."
+    },
+    fill: ({ pick }) => {
+      const [a, b] = pick(2);
+      return { a: a ?? "?", b: b ?? "?" };
+    },
+  },
+  {
+    category: "duo",
+    text: {
+      nl: "{a} en {b}: noem tegelijk een kleur. Verschillend? Beide 1 slok.",
+      en: "{a} and {b}: say a color at the same time. Different? Both take 1 sip.",
+    },
     fill: ({ pick }) => {
       const [a, b] = pick(2);
       return { a: a ?? "?", b: b ?? "?" };
@@ -198,28 +286,30 @@ export const PROMPTS: PromptTemplate[] = [
   // =========================
   {
     category: "challenge",
-    text: { nl: "{a}: doe 10 squats, anders 2 slokken.", en: "{a}: do 10 squats or take 2 sips." },
+    text: {
+      nl: "{a}: raak je tenen (zonder knieën te buigen). Lukt niet? 2 slokken.",
+      en: "{a}: touch your toes (no bent knees). Fail? 2 sips."
+    },
     fill: ({ pick }) => ({ a: pick(1)[0] ?? "?" }),
   },
   {
     category: "challenge",
-    text: { nl: "{a}: 15 seconden plank. Faal = 2 slokken.", en: "{a}: 15 seconds plank. Fail = 2 sips." },
+    text: {
+      nl: "{a}: zeg het alfabet achterstevoren tot en met T. Fout = 2 slokken.",
+      en: "{a}: say the alphabet backwards until T. Fail = 2 sips."
+    },
     fill: ({ pick }) => ({ a: pick(1)[0] ?? "?" }),
   },
   {
     category: "challenge",
-    text: { nl: "{a}: raak je tenen (zonder knieën te buigen). Lukt niet? 2 slokken.", en: "{a}: touch your toes (no bent knees). Fail? 2 sips." },
-    fill: ({ pick }) => ({ a: pick(1)[0] ?? "?" }),
-  },
-  {
-    category: "challenge",
-    text: { nl: "{a}: doe 10 push-ups. Niet? 3 slokken.", en: "{a}: do 10 push-ups. If not: 3 sips." },
-    fill: ({ pick }) => ({ a: pick(1)[0] ?? "?" }),
-  },
-  {
-    category: "challenge",
-    text: { nl: "{a}: zeg het alfabet achterstevoren tot en met T. Fout = 2 slokken.", en: "{a}: say the alphabet backwards until T. Fail = 2 sips." },
-    fill: ({ pick }) => ({ a: pick(1)[0] ?? "?" }),
+    text: {
+      nl: "{a}: Spel {b} zijn naam achterstevoren zonder nadenken. Fout = 2 slokken.",
+      en: "{a}: Say {b}'s name backwards without thinking. Fail = 2 sips."
+    },
+    fill: ({ pick }) => {
+      const [a, b] = pick(2);
+      return { a: a ?? "?", b: b ?? "?" };
+    },
   },
 
   // =========================
@@ -227,23 +317,38 @@ export const PROMPTS: PromptTemplate[] = [
   // =========================
   {
     category: "vote",
-    text: { nl: "STEM: Wie is het meest likely om te laat te komen? Verliezer drinkt 2 slokken.", en: "VOTE: Who is most likely to be late? Loser drinks 2 sips." },
+    text: {
+      nl: "Wie is het meest likely om te laat te komen? Verliezer drinkt 2 slokken.",
+      en: "Who is most likely to be late? Loser drinks 2 sips."
+    },
   },
   {
     category: "vote",
-    text: { nl: "STEM: Wie zou het langst overleven in een zombie-apocalyps? Verliezer 2 slokken.", en: "VOTE: Who would survive longest in a zombie apocalypse? Loser 2 sips." },
+    text: {
+      nl: "Wie zou het langst overleven in een zombie-apocalyps? Verliezer 2 slokken.",
+      en: "Who would survive longest in a zombie apocalypse? Loser 2 sips."
+    },
   },
   {
     category: "vote",
-    text: { nl: "STEM: Wie zou als eerste trouwen? Verliezer 2 slokken.", en: "VOTE: Who will get married first? Loser 2 sips." },
+    text: {
+      nl: "Wie zou als eerste trouwen? Verliezer 2 slokken.",
+      en: "Who will get married first? Loser 2 sips."
+    },
   },
   {
     category: "vote",
-    text: { nl: "STEM: Wie is het meest likely om dronken te appen? Verliezer 2 slokken.", en: "VOTE: Who is most likely to drunk-text? Loser 2 sips." },
+    text: {
+      nl: "Wie wordt het snelst dronken? Verliezer 2 slokken.",
+      en: "Who gets drunk fastest? Loser 2 sips."
+    },
   },
   {
     category: "vote",
-    text: { nl: "STEM: Wie kan het slechtst liegen? Verliezer 2 slokken.", en: "VOTE: Who is the worst liar? Loser 2 sips." },
+    text: {
+      nl: "Wie kan het slechtst liegen? Verliezer 2 slokken.",
+      en: "Who is the worst liar? Loser 2 sips."
+    },
   },
 
   // =========================
@@ -251,52 +356,84 @@ export const PROMPTS: PromptTemplate[] = [
   // =========================
   {
     category: "chain",
-    text: { nl: "KETTING: Om de beurt noem je een biermerk. Wie faalt: 2 slokken.", en: "CHAIN: Take turns naming a beer brand. First to fail: 2 sips." },
+    text: {
+      nl: "Om de beurt noem je een biermerk. Wie faalt: 2 slokken.",
+      en: "Take turns naming a beer brand. First to fail: 2 sips."
+    },
   },
   {
     category: "chain",
-    text: { nl: "KETTING: Om de beurt noem je een land. Geen herhaling. Faal: 2 slokken.", en: "CHAIN: Take turns naming a country. No repeats. Fail: 2 sips." },
+    text: {
+      nl: "Om de beurt noem je een land. Geen herhaling. Wie faalt: 2 slokken.",
+      en: "Take turns naming a country. No repeats. Fail: 2 sips."
+    },
   },
   {
     category: "chain",
-    text: { nl: "KETTING: Om de beurt noem je een artiest/DJ. Faal: 2 slokken.", en: "CHAIN: Take turns naming an artist/DJ. Fail: 2 sips." },
+    text: {
+      nl: "Om de beurt noem je een artiest/DJ. Wie faalt: 2 slokken.",
+      en: "Take turns naming an artist/DJ. Fail: 2 sips."
+    },
   },
   {
     category: "chain",
-    text: { nl: "KETTING: Om de beurt noem je een film. Faal: 2 slokken.", en: "CHAIN: Take turns naming a movie. Fail: 2 sips." },
+    text: {
+      nl: "Om de beurt noem je een film. Wie faalt: 2 slokken.",
+      en: "Take turns naming a movie. Fail: 2 sips."
+    },
   },
   {
     category: "chain",
-    text: { nl: "KETTING: Om de beurt noem je een sport. Faal: 2 slokken.", en: "CHAIN: Take turns naming a sport. Fail: 2 sips." },
+    text: {
+      nl: "Om de beurt noem je een sport. Wie faalt: 2 slokken.",
+      en: "Take turns naming a sport. Fail: 2 sips."
+    },
   },
-
   // =========================
   // RULES (timed no-names via effect)
   // + losse “regel” prompts (wie faalt drinkt)
   // =========================
   {
     category: "rule",
-    text: { nl: "REGEL: Geen namen meer zeggen!", en: "RULE: No names allowed!" },
+    text: {
+      nl: "REGEL: Geen namen meer zeggen!",
+      en: "RULE: No names allowed!"
+    },
   },
   {
     category: "rule",
-    text: { nl: "REGEL: Niet wijzen. Wie wijst: 1 slok.", en: "RULE: No pointing. If you point: 1 sip." },
+    text: {
+      nl: "REGEL: Niet wijzen. Wie wijst: 1 slok.",
+      en: "RULE: No pointing. If you point: 1 sip."
+    },
   },
   {
     category: "rule",
-    text: { nl: "REGEL: Drink met links. Vergeet je dat: 1 slok.", en: "RULE: Drink with your left hand. Forget? 1 sip." },
+    text: {
+      nl: "REGEL: Drink met links. Vergeet je dat: 1 slok.",
+      en: "RULE: Drink with your left hand. Forget? 1 sip."
+    },
   },
   {
     category: "rule",
-    text: { nl: "REGEL: Niet lachen. Lach je: 2 slokken.", en: "RULE: No laughing. If you laugh: 2 sips." },
+    text: {
+      nl: "REGEL: Niet lachen. Lach je: 2 slokken.",
+      en: "RULE: No laughing. If you laugh: 2 sips."
+    },
   },
   {
     category: "rule",
-    text: { nl: "REGEL: Geen scheldwoorden. Overtreding: 2 slokken.", en: "RULE: No swearing. Break it: 2 sips." },
+    text: {
+      nl: "REGEL: Geen scheldwoorden. Overtreding: 2 slokken.",
+      en: "RULE: No swearing. Break it: 2 sips."
+    },
   },
   {
     category: "rule",
-    text: { nl: "REGEL: Geen telefoons. Pak je ‘m? 2 slokken.", en: "RULE: No phones. Touch it? 2 sips." },
+    text: {
+      nl: "REGEL: Geen telefoons. Pak je ‘m? 2 slokken.",
+      en: "RULE: No phones. Touch it? 2 sips."
+    },
   },
 
   // =========================
@@ -305,7 +442,10 @@ export const PROMPTS: PromptTemplate[] = [
   {
     category: "buddies_on",
     effect: "buddies_on",
-    text: { nl: "DRINKMAATJES: {a} & {b} zijn drinkmaatjes!", en: "DRINK BUDDIES: {a} & {b} are drink buddies!" },
+    text: {
+      nl: "{a} & {b} zijn drinkmaatjes!",
+      en: "{a} & {b} are drink buddies!"
+    },
     fill: ({ pick }) => {
       const [a, b] = pick(2);
       return { a: a ?? "?", b: b ?? "?" };
@@ -315,34 +455,11 @@ export const PROMPTS: PromptTemplate[] = [
     category: "buddies_off",
     effect: "buddies_off",
     text: {
-      nl: "DRINKMAATJES OPGEHEVEN: {a} & {b} zijn geen drinkmaatjes meer.",
-      en: "BUDDIES ENDED: {a} & {b} are no longer drink buddies.",
+      nl: "{a} & {b} zijn geen drinkmaatjes meer.",
+      en: "{a} & {b} are no longer drink buddies.",
     },
     fill: ({ endedBuddiesPair, buddiesPair }) => {
       const pair = endedBuddiesPair ?? buddiesPair;
-      return { a: pair?.[0] ?? "?", b: pair?.[1] ?? "?" };
-    },
-  },
-
-  // =========================
-  // BUDDY-RELATED NORMAL/DUO (alleen leuk als buddies actief is)
-  // (engine kan deze gewoon kiezen; als buddiesPair null is valt hij terug op "?")
-  // =========================
-  {
-    category: "normal",
-    text: {
-      nl: "Als jouw drinkmaatje een slok neemt, neem jij ook 1 slok mee (tot het wordt opgeheven).",
-      en: "If your drink buddy takes a sip, you take 1 sip too (until it ends).",
-    },
-  },
-  {
-    category: "duo",
-    text: {
-      nl: "Drinkmaatjes-check: {a} & {b} nemen NU samen 1 slok.",
-      en: "Buddy check: {a} & {b} take 1 sip together NOW.",
-    },
-    fill: ({ buddiesPair, pick }) => {
-      const pair = buddiesPair ?? (pick(2) as any);
       return { a: pair?.[0] ?? "?", b: pair?.[1] ?? "?" };
     },
   },
