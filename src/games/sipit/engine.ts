@@ -91,7 +91,7 @@ function addRule(state: SipItState, rule: { key: string; label: string; minTurns
   state.activeRules.push({
     key: rule.key,
     label: rule.label,
-    remainingTurns: randInt(rule.minTurns ?? 4, rule.maxTurns ?? 10),
+    remainingTurns: randInt(rule.minTurns ?? 20, rule.maxTurns ?? 50),
   });
 }
 
