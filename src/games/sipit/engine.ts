@@ -85,13 +85,17 @@ function endBuddies(state: SipItState): [string, string] | null {
   return pair;
 }
 
-function addRule(state: SipItState, rule: { key: string; label: string; minTurns?: number; maxTurns?: number }) {
-  if (state.activeRules.some((r) => r.key === rule.key)) return;
+export function addActiveRule(state: SipItState, label: string, maxRules = 3) {
+  // geen dubbele
+  if (state.activeRules.some((r) => r.label === label)) return;
+
+  // max 3 tegelijk
+  if (state.activeRules.length >= maxRules) return;
 
   state.activeRules.push({
-    key: rule.key,
-    label: rule.label,
-    remainingTurns: randInt(rule.minTurns ?? 20, rule.maxTurns ?? 50),
+    key: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    label,
+    remainingTurns: randInt(20, 50),
   });
 }
 
@@ -150,7 +154,7 @@ export function nextPrompt(state: SipItState, language: Language): GeneratedProm
         const label = renderPrompt(picked, language, { pick: () => [], buddiesPair: state.buddiesPair });
         const key = `rule_${label}`;
 
-        addRule(state, { key, label });
+        addActiveRule(state, label);
 
         // Toon de regel zelf (jouw tekst begint al met REGEL:)
         return { text: label, category: "rule", activeRules: [...state.activeRules] };

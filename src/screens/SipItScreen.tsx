@@ -6,16 +6,26 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AiPromptQueue } from "../api/promptQueue";
-import { aiPromptId, aiPromptToText, type AiCategory, type AiPrompt } from "../api/sipitAi";
 import RulesInfo from "../components/RulesInfo";
 import TopBar from "../components/TopBar";
 
-import { createSipItState, nextPrompt, type GeneratedPrompt, type SipItState } from "../games/sipit/engine";
+import { AiPromptQueue } from "../ai/promptQueue";
+import { aiPromptId, aiPromptToText, type AiCategory, type AiPrompt } from "../ai/sipitAi";
+
+import {
+  addActiveRule,
+  createSipItState,
+  nextPrompt, // ✅ export this from engine.ts
+  type GeneratedPrompt,
+  type SipItState,
+} from "../games/sipit/engine";
+
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { useT } from "../state/LanguageContext";
 import { usePlayers } from "../state/PlayersContext";
 import COLORS from "../theme/colors";
+
+import { fillPlaceholders } from "../utils/fillPlaceholders";
 
 type PromptFeedback = {
   upvotes: number;
@@ -31,7 +41,6 @@ const BG_BY_CATEGORY: Record<string, string> = {
   multi: COLORS.background,
   challenge: "rgba(63, 36, 17, 1)",
   vote: "rgba(52, 24, 4, 1)",
-  quiz: "rgba(52, 24, 4, 1)",
   chain: "rgba(52, 24, 4, 1)",
   rule: "rgba(52, 24, 4, 1)",
   rule_on: "rgba(52, 24, 4, 1)",
@@ -72,6 +81,12 @@ function toAiCategory(engineCategory: string): AiCategory | null {
   return null;
 }
 
+function normalizeAiCategory(cat: AiCategory, playerCount: number): AiCategory {
+  if (cat === "duo" && playerCount < 2) return "normal";
+  if ((cat === "multi" || cat === "vote" || cat === "chain") && playerCount < 3) return "normal";
+  return cat;
+}
+
 export default function SipItScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
@@ -93,9 +108,9 @@ export default function SipItScreen() {
   // Per-category AI queue
   const queueRef = useRef(new AiPromptQueue(2, 3));
 
-  // Warm (optional): keep a few categories filled
+  // Warm queues (optional)
   useEffect(() => {
-    queueRef.current.warm(playerCount, ["normal", "duo", "multi"]).catch(() => {});
+    queueRef.current.warm(playerCount, ["normal", "duo", "multi", "challenge", "vote", "chain", "rule"]).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playerCount]);
 
@@ -111,27 +126,41 @@ export default function SipItScreen() {
   const [prompt, setPrompt] = useState<GeneratedPrompt>(() => nextPrompt(engineState, language));
   const [currentAi, setCurrentAi] = useState<AiPrompt | null>(null);
 
-  // If language changes: if AI prompt is showing, just swap language; else use engine
+  // If language changes: if AI prompt is showing, just swap language (and refill placeholders again)
   useEffect(() => {
     if (currentAi) {
+      const txt = fillPlaceholders(aiPromptToText(currentAi, language), playerNames);
       setPrompt((prev) => ({
         ...prev,
-        text: aiPromptToText(currentAi, language),
+        text: txt,
+        activeRules: [...engineState.activeRules],
       }));
       return;
     }
-    setPrompt(nextPrompt(engineState, language));
+
+    setPrompt(() => {
+      const eng = nextPrompt(engineState, language);
+      return { ...eng, activeRules: [...engineState.activeRules] };
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
 
-  // Lock landscape while on this screen
+  // Lock landscape while on this screen (ignore web)
   useEffect(() => {
     (async () => {
-      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+      try {
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+      } catch {
+        // web: ignore
+      }
     })();
 
     return () => {
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+      try {
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+      } catch {
+        // ignore
+      }
     };
   }, []);
 
@@ -140,53 +169,47 @@ export default function SipItScreen() {
   const goNext = async () => {
     if (tooFewPlayers) return;
 
-    // Test mode: alleen AI prompts
-    // Kies een categorie via je engine (weights blijven leidend),
-    // maar toon nooit engine tekst.
+    // Engine decides the category (weights etc.)
     const engineNext = nextPrompt(engineState, language);
-    const aiCat = toAiCategory(engineNext.category) ?? "normal";
-    console.log(engineNext.category);
+
+    let aiCat = toAiCategory(engineNext.category) ?? "normal";
+    aiCat = normalizeAiCategory(aiCat, playerCount);
 
     try {
       const ai = await queueRef.current.get(aiCat, playerCount);
+
       if (ai) {
         const id = aiPromptId(ai);
         if (feedbackRef.current[id]?.downvoted) {
-          // Als downvoted toch doorheen glipt: pak meteen nog eentje
-          // (1 extra poging, daarna fallback)
-          const ai2 = await queueRef.current.get(aiCat, playerCount);
-          if (ai2) {
-            setCurrentAi(ai2);
-            setPrompt({
-              text: aiPromptToText(ai2, language),
-              category: ai2.category as any,
-              activeRules: engineNext.activeRules ?? [],
-            });
-            return;
-          }
-        } else {
-          setCurrentAi(ai);
-          setPrompt({
-            text: aiPromptToText(ai, language),
-            category: ai.category as any,
-            activeRules: engineNext.activeRules ?? [],
-          });
+          // extra safety
+          setCurrentAi(null);
+          setPrompt({ ...engineNext, activeRules: [...engineState.activeRules] });
           return;
         }
+
+        const finalText = fillPlaceholders(aiPromptToText(ai, language), playerNames);
+
+        // ✅ If AI generated a rule, actually activate it in the engine state (max 3)
+        if (ai.category === "rule") {
+          addActiveRule(engineState, finalText, 3);
+        }
+
+        setCurrentAi(ai);
+        setPrompt({
+          text: finalText,
+          category: ai.category as any,
+          activeRules: [...engineState.activeRules], // ✅ always from engine state
+        });
+        return;
       }
     } catch {
-      // ignore
+      // ignore and fall back
     }
 
-    // Als AI faalt: laat een duidelijke test-tekst zien (geen engine)
+    // Fallback: show engine prompt (still keep activeRules from engine state)
     setCurrentAi(null);
-    setPrompt({
-      text: language === "nl" ? "AI is even niet beschikbaar." : "AI is temporarily unavailable.",
-      category: "normal" as any,
-      activeRules: engineNext.activeRules ?? [],
-    });
+    setPrompt({ ...engineNext, activeRules: [...engineState.activeRules] });
   };
-
 
   const voteUp = async () => {
     if (!currentAi) return;
@@ -211,7 +234,7 @@ export default function SipItScreen() {
     feedbackRef.current = { ...feedbackRef.current, [id]: updated };
     await saveFeedbackMap(feedbackRef.current);
 
-    // also purge current category queue to avoid re-showing quickly (optional)
+    // optional: purge this category queue so it won’t reappear quickly
     queueRef.current.clear(currentAi.category);
 
     goNext();
