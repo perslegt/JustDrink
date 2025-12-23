@@ -140,25 +140,31 @@ export default function SipItScreen() {
   const goNext = async () => {
     if (tooFewPlayers) return;
 
-    // 1) Let engine decide next (weights, rules, buddies, etc.)
+    // Test mode: alleen AI prompts
+    // Kies een categorie via je engine (weights blijven leidend),
+    // maar toon nooit engine tekst.
     const engineNext = nextPrompt(engineState, language);
+    const aiCat = toAiCategory(engineNext.category) ?? "normal";
+    console.log(engineNext.category);
 
-    // 2) If AI category -> pull from per-category queue
-    const aiCat = toAiCategory(engineNext.category);
-
-    if (aiCat) {
-      try {
-        const ai = await queueRef.current.get(aiCat, playerCount);
-
-        if (ai) {
-          // extra safety: skip downvoted (queue should already filter)
-          const id = aiPromptId(ai);
-          if (feedbackRef.current[id]?.downvoted) {
-            setCurrentAi(null);
-            setPrompt(engineNext);
+    try {
+      const ai = await queueRef.current.get(aiCat, playerCount);
+      if (ai) {
+        const id = aiPromptId(ai);
+        if (feedbackRef.current[id]?.downvoted) {
+          // Als downvoted toch doorheen glipt: pak meteen nog eentje
+          // (1 extra poging, daarna fallback)
+          const ai2 = await queueRef.current.get(aiCat, playerCount);
+          if (ai2) {
+            setCurrentAi(ai2);
+            setPrompt({
+              text: aiPromptToText(ai2, language),
+              category: ai2.category as any,
+              activeRules: engineNext.activeRules ?? [],
+            });
             return;
           }
-
+        } else {
           setCurrentAi(ai);
           setPrompt({
             text: aiPromptToText(ai, language),
@@ -167,15 +173,20 @@ export default function SipItScreen() {
           });
           return;
         }
-      } catch {
-        // ignore and fall back to engine
       }
+    } catch {
+      // ignore
     }
 
-    // 3) Fallback: show engine prompt
+    // Als AI faalt: laat een duidelijke test-tekst zien (geen engine)
     setCurrentAi(null);
-    setPrompt(engineNext);
+    setPrompt({
+      text: language === "nl" ? "AI is even niet beschikbaar." : "AI is temporarily unavailable.",
+      category: "normal" as any,
+      activeRules: engineNext.activeRules ?? [],
+    });
   };
+
 
   const voteUp = async () => {
     if (!currentAi) return;
