@@ -15,7 +15,7 @@ import { aiPromptId, aiPromptToText, type AiCategory, type AiPrompt } from "../a
 import {
   addActiveRule,
   createSipItState,
-  nextPrompt, // ✅ export this from engine.ts
+  nextPrompt,
   type GeneratedPrompt,
   type SipItState,
 } from "../games/sipit/engine";
@@ -33,6 +33,11 @@ type PromptFeedback = {
 };
 
 const FEEDBACK_KEY = "sipit_prompt_feedback_v1";
+
+const LOADING_TEXT: Record<"nl" | "en", string> = {
+  nl: "Even laden… 🍻",
+  en: "Loading… 🍻",
+};
 
 // Backgrounds by category
 const BG_BY_CATEGORY: Record<string, string> = {
@@ -105,12 +110,19 @@ export default function SipItScreen() {
     engineState.players = [...playerNames];
   }, [playerNames, engineState]);
 
-  // Per-category AI queue
-  const queueRef = useRef(new AiPromptQueue(2, 3));
+  // ✅ Bigger per-category AI queue for snappier taps
+  const queueRef = useRef(new AiPromptQueue(4, 6));
 
-  // Warm queues (optional)
+  const prefetchNext = (pc: number) => {
+    // Fill likely categories in background
+    queueRef.current
+      .warm(pc, ["normal", "duo", "multi", "challenge", "vote", "chain", "rule"])
+      .catch(() => {});
+  };
+
+  // Warm queues on playerCount change
   useEffect(() => {
-    queueRef.current.warm(playerCount, ["normal", "duo", "multi", "challenge", "vote", "chain", "rule"]).catch(() => {});
+    prefetchNext(playerCount);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playerCount]);
 
@@ -126,7 +138,7 @@ export default function SipItScreen() {
   const [prompt, setPrompt] = useState<GeneratedPrompt>(() => nextPrompt(engineState, language));
   const [currentAi, setCurrentAi] = useState<AiPrompt | null>(null);
 
-  // If language changes: if AI prompt is showing, just swap language (and refill placeholders again)
+  // If language changes: if AI prompt is showing, swap language + refill placeholders
   useEffect(() => {
     if (currentAi) {
       const txt = fillPlaceholders(aiPromptToText(currentAi, language), playerNames);
@@ -166,6 +178,29 @@ export default function SipItScreen() {
 
   const bg = BG_BY_CATEGORY[prompt.category] ?? COLORS.background;
 
+  const showAiPrompt = (ai: AiPrompt, activeRulesSnapshot: any[] = []) => {
+    const id = aiPromptId(ai);
+    if (feedbackRef.current[id]?.downvoted) return false;
+
+    const finalText = fillPlaceholders(aiPromptToText(ai, language), playerNames);
+
+    // If AI generated a rule, actually activate it in engine state (max 3)
+    if (ai.category === "rule") {
+      addActiveRule(engineState, finalText, 3);
+    }
+
+    setCurrentAi(ai);
+    setPrompt({
+      text: finalText,
+      category: ai.category as any,
+      activeRules: [...engineState.activeRules],
+    });
+
+    // keep queue warm in background
+    prefetchNext(playerCount);
+    return true;
+  };
+
   const goNext = async () => {
     if (tooFewPlayers) return;
 
@@ -175,40 +210,44 @@ export default function SipItScreen() {
     let aiCat = toAiCategory(engineNext.category) ?? "normal";
     aiCat = normalizeAiCategory(aiCat, playerCount);
 
+    // 1) Try instant from queue (snappy)
     try {
-      const ai = await queueRef.current.get(aiCat, playerCount);
-
-      if (ai) {
-        const id = aiPromptId(ai);
-        if (feedbackRef.current[id]?.downvoted) {
-          // extra safety
-          setCurrentAi(null);
-          setPrompt({ ...engineNext, activeRules: [...engineState.activeRules] });
-          return;
-        }
-
-        const finalText = fillPlaceholders(aiPromptToText(ai, language), playerNames);
-
-        // ✅ If AI generated a rule, actually activate it in the engine state (max 3)
-        if (ai.category === "rule") {
-          addActiveRule(engineState, finalText, 3);
-        }
-
-        setCurrentAi(ai);
-        setPrompt({
-          text: finalText,
-          category: ai.category as any,
-          activeRules: [...engineState.activeRules], // ✅ always from engine state
-        });
-        return;
+      const immediate = await queueRef.current.get(aiCat, playerCount);
+      if (immediate) {
+        const shown = showAiPrompt(immediate, engineNext.activeRules ?? []);
+        if (shown) return;
       }
     } catch {
-      // ignore and fall back
+      // ignore
     }
 
-    // Fallback: show engine prompt (still keep activeRules from engine state)
+    // 2) Queue empty -> show loading instantly
     setCurrentAi(null);
-    setPrompt({ ...engineNext, activeRules: [...engineState.activeRules] });
+    setPrompt({
+      text: LOADING_TEXT[language],
+      category: "normal" as any,
+      activeRules: [...engineState.activeRules],
+    });
+
+    // 3) Fetch in background and swap prompt when ready
+    try {
+      await queueRef.current.ensure(aiCat, playerCount);
+      const later = await queueRef.current.get(aiCat, playerCount);
+      if (later) {
+        const shown = showAiPrompt(later, engineNext.activeRules ?? []);
+        if (shown) return;
+      }
+
+      // still nothing -> fallback to engine prompt
+      setCurrentAi(null);
+      setPrompt({ ...engineNext, activeRules: [...engineState.activeRules] });
+    } catch {
+      // fallback to engine prompt
+      setCurrentAi(null);
+      setPrompt({ ...engineNext, activeRules: [...engineState.activeRules] });
+    } finally {
+      prefetchNext(playerCount);
+    }
   };
 
   const voteUp = async () => {
@@ -234,7 +273,7 @@ export default function SipItScreen() {
     feedbackRef.current = { ...feedbackRef.current, [id]: updated };
     await saveFeedbackMap(feedbackRef.current);
 
-    // optional: purge this category queue so it won’t reappear quickly
+    // Purge this category queue so it won’t reappear quickly (optional)
     queueRef.current.clear(currentAi.category);
 
     goNext();
